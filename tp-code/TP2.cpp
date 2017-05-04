@@ -8,6 +8,7 @@
 #include <visp/vpDisplayX.h>
 #include <visp/vpImageConvert.h>
 #include <visp/vpImageFilter.h>
+#include <visp/vpMatrix.h>
 
 
 using namespace std ;
@@ -35,16 +36,14 @@ int blah(vpColVector col)
 }
 
 //int ssd(vpRGBa& c1, vpRGBa& c2, vpMatrix k)
-int ssd(vpImage<vpRGBa> c1, vpImage<vpRGBa> c2, int i, int j, int n, vpMatrix k)
+int ssd(vpRGBa c1, vpRGBa c2)
 {	
-	vpColVector _sd = c1[i+c][j+l] - c2[i+c][j+l];
-	int temp = 0;
+	vpColVector _sd = c1 - c2;
+	int ssd = 0;
 	for (int i1 = 0; i1 < _sd.size(); i1++)
 	{
-
-		temp += _sd[i1] * _sd[i1];
+		ssd += _sd[i1] * _sd[i1];
 	}
-	ssd += k[c][l]/n * temp;
 	return ssd;
 }
 
@@ -88,11 +87,11 @@ int main()
 
 	display(IimageL);
 
-	int size;
-	vpMatrix K(size);
-	getGaussianKernel (K, size, 0., true);
+	/*int size;
+	double* K[ (size+1)/2 ];
+	vpImageFilter::getGaussianKernel (K, size);
 	vpImageFilter::filter(IimageL, IimageL, K);
-	vpImageFilter::filter(IimageR, IimageR, K);
+	vpImageFilter::filter(IimageR, IimageR, K);*/
 
 	EWTA(IimageL, IimageR, Iout);
 	vpImageConvert::convert(Iout, Idisplay);
