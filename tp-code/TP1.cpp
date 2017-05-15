@@ -63,7 +63,7 @@ int main()
 
   double r1, r2, r3;
   r1 = 1; r2 = 1; r3 = 1;
-  double tx = 0.7; double ty = 0; double tz = 2;
+  double tx = 0.3; double ty = 0; double tz = 2;
 
   // I1g
   vpHomogeneousMatrix  gMo(tx, ty, 2+tz, vpMath::rad(0),vpMath::rad(0),0);

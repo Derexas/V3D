@@ -72,6 +72,67 @@ void EWTA(vpImage<double>& i1, vpImage<double>& i2, vpImage<float>& out)
 	}
 }
 
+double w_ssd(vpImage<double>& i1, vpImage<double>& i2, vpImage<double>& k, int i, int j, int jj)
+{
+	double ssd = 0;
+	int ksize = k.getHeight();
+	int ks2 = ksize / 2;
+	for(int u = 0; u < ksize; u++) {
+		for(int v = 0; v < ksize; v++) {
+			int iu = i-ks2+u;
+			int jv = j-ks2+v;
+			int jjv = jj-ks2+v;
+			if (iu >= 0 && iu < i1.getHeight() && jv >= 0 && jv < i1.getWidth() && jjv >= 0 && jjv < i1.getHeight()) {
+				int sd = i1[iu][jv] - i2[iu][jjv];
+				ssd += k[u][v]*(sd*sd);
+			}
+		}
+	}
+	return ssd;
+}
+
+int w_delta(vpImage<double>& i1, vpImage<double>& i2, vpImage<double>& k, int i, int j)
+{
+	int minimum = 1000, min_j = -1, v = 0;
+	for (int jj = 0; jj < i2.getWidth(); jj++) {
+		v = w_ssd(i1, i2, k, i, j, jj);
+		if (v < minimum) {
+			minimum = v;
+			min_j = jj;
+		}
+	}
+	if (min_j < 0)
+		return 0;
+	return min_j - j;
+}
+
+void w_EWTA(vpImage<double>& i1, vpImage<double>& i2, vpImage<double>& k, vpImage<float>& out)
+{
+	for (int j = 0; j < i1.getWidth(); j++) {
+		for (int i = 0; i < i1.getHeight(); i++) {
+			out[i][j] = w_delta(i1, i2, k, i, j);
+			if (j == i1.getWidth()-1) out[i][j] = 255;
+		}
+	}
+}
+
+void gaussianKernel(const int & taille, vpImage<double>& kernel){
+
+  int demi_taille=(taille+1)/2;
+
+  double filter[demi_taille];
+
+  vpImageFilter::getGaussianKernel(filter, taille);
+
+  for(int i=0; i<taille; i++){
+    for(int j=0; j<taille; j++){
+      int ii=i-taille/2, jj=j-taille/2;
+      kernel[i][j]=filter[abs(ii)]*filter[abs(jj)];
+      cout << kernel[i][j] << endl;
+    }
+  }
+}
+
 int main()
 {
 	int w = 384, h = 288;
@@ -85,16 +146,22 @@ int main()
 	vpImageIo::read(IimageL,"../data/scene_l.pgm");
 	vpImageIo::read(IimageR,"../data/scene_r.pgm");
 
-	display(IimageL); cout << "a" << endl;
+	display(IimageL);
 
-	int size = 3;
-	vpImageFilter::gaussianBlur(IimageL, IimageLO, size);
+	int size = 7;
+	/*vpImageFilter::gaussianBlur(IimageL, IimageLO, size);
 	vpImageFilter::gaussianBlur(IimageR, IimageRO, size);
-	EWTA(IimageLO, IimageRO, Iout); cout << "d" << endl;
-	vpImageConvert::convert(Iout, Idisplay); cout << "d" << endl;
-	display(Idisplay);
+	EWTA(IimageLO, IimageRO, Iout);
+	vpImageConvert::convert(Iout, Idisplay);
+	display(Idisplay);*/
 
-	//vpImageIo::write(Icamera,"I1g.jpg");*/
+	vpImage<double> k(size, size);
+	gaussianKernel(size, k);
+	vpImageConvert::convert(IimageL, IimageLO);
+	vpImageConvert::convert(IimageR, IimageRO);
+	w_EWTA(IimageLO, IimageRO, k, Iout);
+	vpImageConvert::convert(Iout, Idisplay);
+	display(Idisplay);
 
 	return 0;
 }
