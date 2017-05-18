@@ -10,11 +10,11 @@
 using namespace std ;
 
 void process_x2_y2(double& x2, double& y2, double x1, double y1, double Z, 
-  double r1, double r2, double r3,
-  double tx, double ty, double tz)
+	vpHomogeneousMatrix m)
 {
-  x2 = (Z*(r1*x1 + 0*y1 + 0*1) + tx) / (Z*(0*x1 + 0*y1 + r3*1) + tz);
-  y2 = (Z*(0*x1 + r2*y1 + 0*1) + ty) / (Z*(0*x1 + 0*y1 + r3*1) + tz);
+	cout << m << endl;
+  x2 = (Z*(m[0][0]*x1 + m[0][1]*y1 + m[0][2]*1) + m[0][3]) / (Z*(m[2][0]*x1 + m[2][1]*y1 + m[2][2]*1) + m[2][3]);
+  y2 = (Z*(m[1][0]*x1 + m[1][1]*y1 + m[1][2]*1) + m[1][3]) / (Z*(m[2][0]*x1 + m[2][1]*y1 + m[2][2]*1) + m[2][3]);
 }
 
 int main()
@@ -60,13 +60,11 @@ int main()
 
   cam.printParameters() ;
 
-
-  double r1, r2, r3;
-  r1 = 1; r2 = 1; r3 = 1;
-  double tx = 0.4; double ty = 0.2; double tz = 2;
+  double tx = 0.1; double ty = 0.; double tz = -0.1;
 
   // I1g
-  vpHomogeneousMatrix  gMo(tx, ty, 2+tz, vpMath::rad(0),vpMath::rad(0),0);
+  vpHomogeneousMatrix  gMo(tx, ty, 2+tz, vpMath::rad(5),vpMath::rad(5),vpMath::rad(5));
+
   sim.setCameraPosition(gMo);
   sim.getImage(Ig,cam);
   cout << "Image I1g " << endl ;
@@ -91,12 +89,15 @@ int main()
   vpDisplay::display(Id) ;
   vpDisplay::flush(Id) ;
 
-  vpImagePoint pd ; 
+	vpHomogeneousMatrix gtd = gMo*dMo.inverse();
+	vpHomogeneousMatrix dtg = dMo*gMo.inverse();
 
-  for (int i=0 ; i < 5 ; i++)
+  vpImagePoint pd ;
+
+  for (int i=0 ; i < 10 ; i++)
     {
       cout << "Click point number " << i << endl ;
-      /*vpDisplay::getClick(Id, pd) ;
+      vpDisplay::getClick(Id, pd) ;
       
       
       vpDisplay::displayCross(Id,pd,5,vpColor::red) ;
@@ -112,33 +113,40 @@ int main()
       double Z = 1;
       double x2, y2;
 
-      vpImagePoint p1, p2;
-      /*process_x2_y2(x2, y2, x1, y1, Z, r1, r2, r3, tx, ty, tz);
+      vpImagePoint p1, p2, p3, p4;
+      
+	process_x2_y2(x2, y2, x1, y1, Z, gtd);
       p1.set_u(x2 * px + u0); p1.set_v(y2 * py + v0);
-      Z = 100000;
-      process_x2_y2(x2, y2, x1, y1, Z, r1, r2, r3, tx, ty, tz);
+      Z = 1000;
+      process_x2_y2(x2, y2, x1, y1, Z, gtd);
       p2.set_u(x2 * px + u0); p2.set_v(y2 * py + v0);
       std::cout << pd << " | " << p1 << " | " << p2 << std::endl;
 
+	p3 = p1 - p2; p3.set_u(p3.get_u()*20); p3.set_v(p3.get_v()*20);
+	p1 = p1 + p3; p2 = p2 - p3;
 
-      vpDisplay::displayDotLine(Ig, p1, p2, vpColor::red);
+      vpDisplay::displayLine(Ig, p1, p2, vpColor::red);
 
       //*/// ----------------------------------------------------------
 
-      vpDisplay::getClick(Ig, pd);
+      /*vpDisplay::getClick(Ig, pd);
       vpDisplay::displayCross(Ig,pd,5,vpColor::red);
       u = pd.get_u();
       v = pd.get_v();
       x1 = (u - u0) / px;
       y1 = (v - v0) / py;
       Z = 0.1;
-      process_x2_y2(x2, y2, x1, y1, Z, r1, r2, r3, -tx, -ty, -tz);
+      process_x2_y2(x2, y2, x1, y1, Z, dtg);
       p1.set_u(x2 * px + u0); p1.set_v(y2 * py + v0);
-      Z = 1000000;
-      process_x2_y2(x2, y2, x1, y1, Z, r1, r2, r3, -tx, -ty, -tz);
+      Z = 1000;
+      process_x2_y2(x2, y2, x1, y1, Z, dtg);
       p2.set_u(x2 * px + u0); p2.set_v(y2 * py + v0);
       std::cout << pd << " | " << p1 << " | " << p2 << std::endl;
-      vpDisplay::displayDotLine(Id, p1, p2, vpColor::red);//*/
+
+	p3 = p1 - p2; p3.set_u(p3.get_u()*20); p3.set_v(p3.get_v()*20);
+	p1 = p1 + p3; p2 = p2 - p3;
+
+      vpDisplay::displayLine(Id, p1, p2, vpColor::red);//*/
 
       // Affichage dans Ig
       
