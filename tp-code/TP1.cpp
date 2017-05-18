@@ -63,7 +63,7 @@ int main()
 
   double r1, r2, r3;
   r1 = 1; r2 = 1; r3 = 1;
-  double tx = 0.3; double ty = 0; double tz = 2;
+  double tx = 0.4; double ty = 0.2; double tz = 2;
 
   // I1g
   vpHomogeneousMatrix  gMo(tx, ty, 2+tz, vpMath::rad(0),vpMath::rad(0),0);
@@ -96,11 +96,11 @@ int main()
   for (int i=0 ; i < 5 ; i++)
     {
       cout << "Click point number " << i << endl ;
-      vpDisplay::getClick(Id, pd) ;
+      /*vpDisplay::getClick(Id, pd) ;
       
       
       vpDisplay::displayCross(Id,pd,5,vpColor::red) ;
-
+      //*/
 
       // Calcul du lieu geometrique
       //....
@@ -113,15 +113,32 @@ int main()
       double x2, y2;
 
       vpImagePoint p1, p2;
-      process_x2_y2(x2, y2, x1, y1, Z, r1, r2, r3, tx, ty, tz);
+      /*process_x2_y2(x2, y2, x1, y1, Z, r1, r2, r3, tx, ty, tz);
       p1.set_u(x2 * px + u0); p1.set_v(y2 * py + v0);
-      Z = 1000;
+      Z = 100000;
       process_x2_y2(x2, y2, x1, y1, Z, r1, r2, r3, tx, ty, tz);
       p2.set_u(x2 * px + u0); p2.set_v(y2 * py + v0);
-      std::cout << pd << " | " << p2 << std::endl;
+      std::cout << pd << " | " << p1 << " | " << p2 << std::endl;
 
 
       vpDisplay::displayDotLine(Ig, p1, p2, vpColor::red);
+
+      //*/// ----------------------------------------------------------
+
+      vpDisplay::getClick(Ig, pd);
+      vpDisplay::displayCross(Ig,pd,5,vpColor::red);
+      u = pd.get_u();
+      v = pd.get_v();
+      x1 = (u - u0) / px;
+      y1 = (v - v0) / py;
+      Z = 0.1;
+      process_x2_y2(x2, y2, x1, y1, Z, r1, r2, r3, -tx, -ty, -tz);
+      p1.set_u(x2 * px + u0); p1.set_v(y2 * py + v0);
+      Z = 1000000;
+      process_x2_y2(x2, y2, x1, y1, Z, r1, r2, r3, -tx, -ty, -tz);
+      p2.set_u(x2 * px + u0); p2.set_v(y2 * py + v0);
+      std::cout << pd << " | " << p1 << " | " << p2 << std::endl;
+      vpDisplay::displayDotLine(Id, p1, p2, vpColor::red);//*/
 
       // Affichage dans Ig
       
