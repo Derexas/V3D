@@ -1,5 +1,7 @@
 #include <iostream>
 #include <math.h>
+#include <sstream>
+#include <string>
 
 #include <visp/vpDebug.h>
 #include <visp/vpImage.h>
@@ -79,13 +81,12 @@ double w_ssd(vpImage<double>& i1, vpImage<double>& i2, vpImage<double>& k, int i
 	int ks2 = ksize / 2;
 	for(int u = 0; u < ksize; u++) {
 		for(int v = 0; v < ksize; v++) {
-			int iu = i-ks2+u;
-			int jv = j-ks2+v;
-			int jjv = jj-ks2+v;
-			if (iu >= 0 && iu < i1.getHeight() && jv >= 0 && jv < i1.getWidth() && jjv >= 0 && jjv < i1.getHeight()) {
-				int sd = i1[iu][jv] - i2[iu][jjv];
-				ssd += k[u][v]*(sd*sd);
-			}
+			int iu = i - ks2 + u;
+			int jv = j - ks2 + v;
+			int jjv = jj - ks2 + v;
+			
+			int sd = i1[iu][jv] - i2[iu][jjv];
+			ssd += k[u][v]*(sd*sd);
 		}
 	}
 	return ssd;
@@ -94,29 +95,45 @@ double w_ssd(vpImage<double>& i1, vpImage<double>& i2, vpImage<double>& k, int i
 int w_delta(vpImage<double>& i1, vpImage<double>& i2, vpImage<double>& k, int i, int j)
 {
 	int minimum = 1000, min_j = -1, v = 0;
-	for (int jj = 0; jj < i2.getWidth(); jj++) {
+	int ks2 = k.getHeight() / 2;
+	for (int jj = ks2; jj < i2.getWidth() - ks2; jj++) {
 		v = w_ssd(i1, i2, k, i, j, jj);
 		if (v < minimum) {
+			if (v < 0)
 			minimum = v;
 			min_j = jj;
 		}
 	}
-	if (min_j < 0)
+	if (min_j < 0) // if not found
 		return 0;
 	return min_j - j;
 }
 
 void w_EWTA(vpImage<double>& i1, vpImage<double>& i2, vpImage<double>& k, vpImage<float>& out)
 {
-	for (int j = 0; j < i1.getWidth(); j++) {
-		for (int i = 0; i < i1.getHeight(); i++) {
+	int ks2 = k.getHeight() / 2 + 1;
+	for (int j = ks2; j < i1.getWidth() - ks2; j++) {
+		for (int i = ks2; i < i1.getHeight() - ks2; i++) {
 			out[i][j] = w_delta(i1, i2, k, i, j);
-			if (j == i1.getWidth()-1) out[i][j] = 255;
+			//cout << "out:" << out[i][j] << endl;
+			//if (j == i1.getWidth()-1) out[i][j] = 255;
 		}
 	}
 }
 
-void gaussianKernel(const int & taille, vpImage<double>& kernel){
+void constantKernel(const int & taille, vpImage<double>& kernel)
+{
+	double value = 1. / (taille*taille);
+	cout << value << endl;
+	for(int i=0; i<taille; i++){
+	    for(int j=0; j<taille; j++){
+	    	kernel = value;
+	    }
+	}
+}
+
+void gaussianKernel(const int & taille, vpImage<double>& kernel)
+{
 
   int demi_taille=(taille+1)/2;
 
@@ -139,7 +156,7 @@ int main()
 	vpImage<unsigned char> IimageL(h,w);
 	vpImage<unsigned char> IimageR(h,w);
 	vpImage<float> Iout(h,w);
-	vpImage<unsigned char> Idisplay(h,w);
+	vpImage<unsigned char> Idisplay;
 	vpImage<double> IimageLO(h,w);
 	vpImage<double> IimageRO(h,w);
  
@@ -149,18 +166,23 @@ int main()
 	display(IimageL);
 
 	int size = 7;
-	/*vpImageFilter::gaussianBlur(IimageL, IimageLO, size);
-	vpImageFilter::gaussianBlur(IimageR, IimageRO, size);
-	EWTA(IimageLO, IimageRO, Iout);
-	vpImageConvert::convert(Iout, Idisplay);
-	display(Idisplay);*/
-
-	vpImage<double> k(size, size);
-	gaussianKernel(size, k);
 	vpImageConvert::convert(IimageL, IimageLO);
 	vpImageConvert::convert(IimageR, IimageRO);
+
+	/*vpImageFilter::gaussianBlur(IimageL, IimageLO, size);
+	vpImageFilter::gaussianBlur(IimageR, IimageRO, size);*/
+	//EWTA(IimageLO, IimageRO, Iout);//*/
+
+	vpImage<double> k(size, size);
+	constantKernel(size, k);
+	vpImageConvert::convert(k, Idisplay);
+	vpImageIo::write(Idisplay, "../kernel.pgm");
 	w_EWTA(IimageLO, IimageRO, k, Iout);
+	
 	vpImageConvert::convert(Iout, Idisplay);
+	std::stringstream ss;
+	ss << "../tp2_q3_ck" << size << ".pgm";
+	vpImageIo::write(Idisplay, ss.str());
 	display(Idisplay);
 
 	return 0;
